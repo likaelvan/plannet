@@ -1,0 +1,25 @@
+# Local Python environment and generated files
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Personal planner data and exported backups
+data/
+*.sqlite3*
+*.sqlite
+*.db
+*.db-*
+plannet-backup-*.json
+plan-net-backup-*.json
+backups/
+
+# Local configuration and logs
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
