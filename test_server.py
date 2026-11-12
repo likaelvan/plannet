@@ -32,6 +32,13 @@ class PlannerTests(unittest.TestCase):
             with self.subTest(field=field,value=value),self.assertRaises(ValueError):server.validate(d)
         d=server.seed();d['tasks'].append(copy.deepcopy(d['tasks'][0]))
         with self.assertRaises(ValueError):server.validate(d)
+    def test_repeat_validation(self):
+        d=server.seed();task=d['tasks'][0];task['deadline']='2026-11-16'
+        task['repeat']={'unit':'week','mode':'fixed','interval':2,'weekday':1,'paused':False}
+        self.assertEqual(server.validate(d),d)
+        for value in (0,1.5,'2',True,None):
+            task['repeat']['interval']=value
+            with self.subTest(value=value),self.assertRaises(ValueError):server.validate(d)
     def test_empty_planner_is_valid(self):self.assertEqual(server.validate({'tabs':[],'categories':[],'tasks':[]})['tasks'],[])
     def test_http_and_origin_protection(self):
         srv=server.ThreadingHTTPServer(('127.0.0.1',0),server.Handler);thread=threading.Thread(target=srv.serve_forever,daemon=True);thread.start();base=f'http://127.0.0.1:{srv.server_port}'

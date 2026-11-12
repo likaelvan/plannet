@@ -23,3 +23,7 @@ backups/
 *.log
 .DS_Store
 Thumbs.db
+
+# Web/PWA build outputs
+node_modules/
+dist/

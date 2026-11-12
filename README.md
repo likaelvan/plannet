@@ -2,7 +2,13 @@
 
 A local task planner for everyday tasks, projects, learning, and content ideas. Organize work into tabs, break tasks into subtasks, or turn a tab into an ordered schedule with an estimated finish time.
 
-Built with Python’s standard library, SQLite, and plain HTML, CSS, and JavaScript. No third-party packages, accounts, or external services are required.
+The original desktop version uses Python’s standard library, SQLite, and plain HTML, CSS, and JavaScript. It needs no third-party Python packages. The new account-based web/PWA version uses Supabase and project-local npm dependencies.
+
+## Web and mobile app
+
+An account-based PWA is being added alongside the local desktop version. It supports verified email signup, private profiles, offline drafts, and conflict-checked cloud sync. Follow [the web setup guide](docs/WEB_SETUP.md) to configure Supabase and build the installable website. A connected Supabase project and working email delivery are required for real signup; the unconfigured preview does not create accounts.
+
+The Python instructions below apply to the original local-only version. The web build uses Node.js 22+ and project-local npm dependencies.
 
 ## Features
 
@@ -129,3 +135,18 @@ node --check static/app.js
 ## License
 
 No license has been selected yet. A public repository alone does not grant an open-source license.
+
+
+### Repeats and appearance
+
+New tasks start unfinished; complete them with the checkbox in the task list. In the task form, choose daily or weekly repeats and an interval (for example, every 2 weeks). Fixed schedules keep their calendar rhythm; after-completion schedules count from the day you finish. Weekly fixed repeats align the first deadline to the chosen weekday.
+
+Completing or skipping a repeat keeps that occurrence in history and creates one next occurrence. Missed dates do not produce a backlog. Pause a repeat to stop generating successors. Reopening a completed occurrence does not generate a duplicate; use **Edit next occurrence** to change the next task. Subtasks remain independent, and new occurrences are not automatically added to an old timed schedule.
+
+Use **Profile** for your name, greeting language, time zone, and appearance. The theme button cycles Light, Dark, and Sage; these preferences are saved on this device (scoped to your account in the web app). The prominent **+** beside the tabs adds a tab.
+
+### Running timed tabs
+
+Start begins the timeline at the current instant. Pause freezes schedule-overdue detection; Continue shifts the schedule by the paused duration. Unfinished tasks turn red after their planned finish. The timer persists across reloads. Calendar deadlines remain independent of pauses. Tasks can still be added, edited, removed, and reordered; this recalculates their planned times. Set every duration before starting.
+
+Repeats also support months and years. Short months clamp to their last day; a fixed January 31 repeat returns to March 31 after February. A fixed February 29 yearly repeat returns to February 29 in leap years.

@@ -1,0 +1,14 @@
+{
+  "name": "plannet-web",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22"},
+  "scripts": {
+    "build": "node web/build.mjs",
+    "preview": "node web/preview.mjs",
+    "test": "node --test web/tests/*.test.mjs"
+  },
+  "dependencies": {"@supabase/supabase-js": "2.119.0"},
+  "devDependencies": {"esbuild": "0.28.2", "@electric-sql/pglite": "0.5.16", "fake-indexeddb": "6.2.5"}
+}

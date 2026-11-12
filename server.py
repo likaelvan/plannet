@@ -57,6 +57,12 @@ def validate(data):
                 parsed=dt.date.fromisoformat(task['deadline'])
                 if parsed.isoformat()!=task['deadline']: raise ValueError()
             except ValueError: raise ValueError('Use a valid deadline date.')
+        repeat=task.get('repeat')
+        if repeat is not None:
+            if not isinstance(repeat,dict) or repeat.get('unit') not in ('day','week','month','year') or repeat.get('mode') not in ('fixed','after') or type(repeat.get('interval')) is not int or not 1<=repeat['interval']<=365 or type(repeat.get('weekday')) is not int or not 0<=repeat['weekday']<=6 or type(repeat.get('paused')) is not bool or not task['deadline']: raise ValueError('Invalid repeating task settings.')
+        for key in ('nextOccurrenceId','seriesId'):
+            if key in task and (not isinstance(task[key],str) or not 1<=len(task[key])<=100): raise ValueError('Invalid repeat history.')
+        if 'skipped' in task and type(task['skipped']) is not bool: raise ValueError('Invalid skipped state.')
         parent=task.get('parentId')
         if parent is not None:
             if parent not in tasks or tasks[parent]['tabId']!=task['tabId'] or tasks[parent]['categoryId']!=task['categoryId']: raise ValueError('Subtasks must stay with their parent category.')
@@ -76,6 +82,9 @@ def validate(data):
             if dt.date.fromisoformat(plan['date']).isoformat()!=plan['date']: raise ValueError()
             if dt.time.fromisoformat(plan['start']).strftime('%H:%M')!=plan['start']: raise ValueError()
         except ValueError: raise ValueError('Invalid day plan date or start time.')
+        runtime=plan.get('runtime')
+        if runtime is not None:
+            if not isinstance(runtime,dict) or any(type(runtime.get(k)) not in (int,float) or not 0<=runtime[k]<=8640000000000000 for k in ('startedAt','delayMs')) or (runtime.get('pausedAt') is not None and (type(runtime['pausedAt']) not in (int,float) or not 0<=runtime['pausedAt']<=8640000000000000)): raise ValueError('Invalid timer state.')
         task_ids=plan.get('taskIds')
         if not isinstance(task_ids,list) or any(not isinstance(x,str) for x in task_ids) or len(task_ids)!=len(set(task_ids)) or any(x not in tasks for x in task_ids): raise ValueError('Invalid day plan tasks.')
     return data
@@ -130,7 +139,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed():return self.reply(403,{'error':'Use the local Plannet address.'})
         path=urlparse(self.path).path
         if path=='/api/state':return self.reply(200,read_state())
-        files={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/favicon.svg':'favicon.svg'}
+        files={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/favicon.svg':'favicon.svg','/recurrence.js':'recurrence.js','/themes.css':'themes.css'}
         if path not in files:return self.reply(404,{'error':'Not found.'})
         file=ROOT/'static'/files[path];body=file.read_bytes()
         self.send_response(200);self.send_header('Content-Type',mimetypes.guess_type(file)[0] or 'text/plain');self.send_header('Content-Length',str(len(body)));self.send_header('Cache-Control','no-cache');self.send_header('X-Content-Type-Options','nosniff');self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'");self.end_headers();self.wfile.write(body)
