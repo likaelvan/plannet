@@ -2,7 +2,7 @@
 
 ## Local setup
 
-Follow the virtual-environment setup in [README.md](README.md). The app has no third-party Python or frontend dependencies and no build step.
+Follow the virtual-environment setup in [README.md](README.md). The desktop version has no third-party Python dependencies or build step. For the web/PWA version, use Node.js 22+, run `npm ci`, and follow [WEB_SETUP.md](docs/WEB_SETUP.md).
 
 ## Source layout
 
@@ -49,3 +49,15 @@ Do not bypass revision checks when changing save behavior. Browser preferences a
 - Describe the change and the checks run in pull requests. Add focused regression coverage for behavior changes where practical.
 
 The repository does not yet include a license; the owner must choose one before describing it as open source.
+
+## Web/PWA development
+
+`web/build.mjs` bundles `web/cloud.mjs` and adapts the shared frontend from `static/` into `dist/`. Do not edit generated `dist/` files. The desktop entry point remains separate and its SQLite database is never bundled.
+
+- `web/store.mjs`: account-scoped IndexedDB persistence and cloud conflict handling.
+- `web/account.html`, `web/mobile.css`: onboarding, account controls, and responsive layouts.
+- `web/sw.js`: public-asset-only service worker.
+- `supabase/migrations/`: database schema, row-level policies, and restricted RPC functions.
+- `web/tests/`: isolated IndexedDB tests and SQL integration tests using PGlite with mocked identity roles.
+
+Run `npm test` and `npm run build`. Keep `package-lock.json` committed and keep `.env`, `node_modules/`, and `dist/` untracked. Only public configuration belongs in a client bundle. Never add a secret/service-role key. Follow the hosted verification checklist in the setup guide before releasing accounts to real users.
