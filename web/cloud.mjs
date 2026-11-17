@@ -63,13 +63,13 @@ document.querySelectorAll('#onboarding-birthdate,#cloud-birthdate').forEach(el=>
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 if(!configured){$('#configuration-note').hidden=false;$('#send-link').disabled=true;$('#google-signin').disabled=true;}
 else {
- client=createClient(config.url,config.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit'}});
+ client=createClient(config.url,config.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
  const callbackFailed=new URLSearchParams(location.hash.slice(1)).has('error')||new URLSearchParams(location.search).has('error');
  await watchLogin(client,async next=>{
   if(transitioning)return;
   if(session&&next?.user?.id!==session.user.id){transitioning=true;document.body.classList.remove('signed-in');location.reload();return;}
   if(next)await authenticated(next);
- },()=>message('Could not finish signing in. Try Google again or request a fresh email link while connected to the internet.'));
+ },()=>message('Could not finish signing in. Start sign-in again in this browser. Open email links in the same browser and device that requested them.'));
  // The SDK consumes valid callback tokens; remove any remaining auth fragment from the address bar.
  if(/(?:access_token|refresh_token|error)=/.test(location.hash))history.replaceState(null,'',location.pathname+location.search);
  if(callbackFailed&&!session)message('Sign-in was cancelled or could not be completed. Try Google again or request a new email link.');
