@@ -1,5 +1,5 @@
 import {createClient} from '@supabase/supabase-js';
-import {watchLogin,magicLinkOptions} from './login.mjs';
+import {watchLogin,magicLinkOptions,startGoogleLogin} from './login.mjs';
 import {openCache,PlannerStore,ConflictError,LocalConflictError,migratePlanner} from './store.mjs';
 const config=__PUBLIC_CONFIG__, $=s=>document.querySelector(s);
 let client,session,profile,store,cache,signup=true,email='',started=false,transitioning=false,mode='saved',imported=null;
@@ -33,12 +33,13 @@ async function authenticated(next){
  session=next;cache=await openCache(`plannet-${project}`);
  const {data,error}=await client.from('profiles').select('id,name,username,birthdate').eq('id',session.user.id).maybeSingle();
  if(error){const cachedProfile=await cache.read(`profile:${session.user.id}`);if(!cachedProfile)throw error;profile=cachedProfile;}else profile=data;
- $('#email-form').hidden=true;$('#link-sent').hidden=true;
- if(!profile){$('#onboarding-form').hidden=false;$('#account-heading').textContent='Make this space yours';message('Email verified. Choose your name and username.');return;}
+ $('#google-login').hidden=true;$('#email-form').hidden=true;$('#link-sent').hidden=true;
+ if(!profile){$('#onboarding-form').hidden=false;$('#account-heading').textContent='Make this space yours';$('#onboarding-name').value=session.user.user_metadata?.full_name||'';message('Signed in. Choose your name and username.');return;}
  await cache.update(`profile:${session.user.id}`,()=>profile);$('#onboarding-form').hidden=true;await startPlanner();
 }
 $('#choose-signup').onclick=()=>{signup=true;$('#choose-signup').setAttribute('aria-pressed','true');$('#choose-login').setAttribute('aria-pressed','false');};
 $('#choose-login').onclick=()=>{signup=false;$('#choose-signup').setAttribute('aria-pressed','false');$('#choose-login').setAttribute('aria-pressed','true');};
+$('#google-signin').onclick=()=>{if(!configured)return message('Connect Supabase first; see the setup guide.');action($('#google-login'),async()=>{message('Opening Google sign-in…');await startGoogleLogin(client,location.origin);});};
 $('#email-form').onsubmit=e=>{e.preventDefault();if(!configured)return message('Connect Supabase first; see the setup guide.');action(e.target,async()=>{email=$('#login-email').value.trim();const {error}=await client.auth.signInWithOtp(magicLinkOptions(email,signup,location.origin));if(error)throw error;$('#email-form').hidden=true;$('#link-sent').hidden=false;$('#sent-email').textContent=email;message('Open the newest sign-in link in your email. It will bring you back to Plannet.');});};
 $('#change-email').onclick=()=>{$('#email-form').hidden=false;$('#link-sent').hidden=true;message('Enter your email to request a fresh link. You may need to wait before sending again.');};
 $('#onboarding-form').onsubmit=e=>{e.preventDefault();action(e.target,async()=>{await saveProfile(profileValues('onboarding'));await cache.update(`profile:${session.user.id}`,()=>profile);await startPlanner();});};
@@ -60,7 +61,7 @@ let installPrompt;window.addEventListener('beforeinstallprompt',e=>{e.preventDef
 window.addEventListener('online',sync);setInterval(()=>{if(navigator.onLine)sync();},30000);
 document.querySelectorAll('#onboarding-birthdate,#cloud-birthdate').forEach(el=>el.max=new Date().toISOString().slice(0,10));
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
-if(!configured){$('#configuration-note').hidden=false;$('#send-link').disabled=true;}
+if(!configured){$('#configuration-note').hidden=false;$('#send-link').disabled=true;$('#google-signin').disabled=true;}
 else {
  client=createClient(config.url,config.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit'}});
  const callbackFailed=new URLSearchParams(location.hash.slice(1)).has('error')||new URLSearchParams(location.search).has('error');
@@ -68,8 +69,8 @@ else {
   if(transitioning)return;
   if(session&&next?.user?.id!==session.user.id){transitioning=true;document.body.classList.remove('signed-in');location.reload();return;}
   if(next)await authenticated(next);
- },()=>message('Could not finish signing in. Request a fresh email link and open it while connected to the internet.'));
+ },()=>message('Could not finish signing in. Try Google again or request a fresh email link while connected to the internet.'));
  // The SDK consumes valid callback tokens; remove any remaining auth fragment from the address bar.
  if(/(?:access_token|refresh_token|error)=/.test(location.hash))history.replaceState(null,'',location.pathname+location.search);
- if(callbackFailed&&!session)message('This sign-in link has expired or was already used. Request a new link below.');
+ if(callbackFailed&&!session)message('Sign-in was cancelled or could not be completed. Try Google again or request a new email link.');
 }

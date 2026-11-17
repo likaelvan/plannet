@@ -114,3 +114,19 @@ For an existing Supabase project, run only `supabase/migrations/202611120002_rep
 Desktop testing via Start Plannet.bat needs no Supabase connection. Restart the desktop server after updating, then refresh your browser.
 
 For monthly/yearly repeats, also run `supabase/migrations/202611120003_calendar_repeats.sql` once after migration 002. Existing data is preserved. Rebuild the web app afterward.
+
+
+## Google login and first Cloudflare deployment
+
+Google login is available alongside email links. It uses the same Supabase user/profile flow and requires no Google client secret in frontend code. Use the same verified email as your existing account; verify that your original planner appears before importing any backup.
+
+1. Create a free Cloudflare account. In Workers & Pages, create a Pages project using Git integration. Connect only the `likaelvan/plannet` repository. Select the branch containing these updates. Framework: None; build: `npm ci && npm run build`; output: `dist`; Node: 22 or newer. Add the two public Supabase variables from your local `.env` as build variables. Do not upload the whole project folder.
+2. Deploy and copy the actual `https://YOUR-PROJECT.pages.dev` URL. In Supabase Authentication → URL Configuration, set Site URL to that URL and add its exact root URL (with trailing slash) to Redirect URLs. Retain your local preview redirect if needed.
+3. In Google Cloud Console create a project named Plannet. Open Google Auth Platform and complete Branding (app name and your support/contact email), Audience (External for personal Google accounts), and Data Access. Use only basic identity scopes: openid, email, profile. While in Testing, add your own Google account as a test user.
+4. Under Clients create an OAuth client of type Web application. Add your Pages origin under Authorized JavaScript origins. Under Authorized redirect URIs, paste the exact callback URL shown in Supabase's Google provider settings: `https://YOUR-PROJECT-REF.supabase.co/auth/v1/callback`. The Google callback is the Supabase URL, not your Pages URL.
+5. Copy the Google client ID and client secret directly into Supabase Authentication → Sign In / Providers → Google. Enable and save the provider. Keep the secret out of Git, Cloudflare frontend variables, and chat. Leave nonce checks enabled.
+6. Open the hosted app in your phone browser, choose Continue with Google, and complete profile setup. Confirm tasks sync with a desktop browser. Install using Add to Home Screen. Test a second account before opening to other users; review Google's publishing requirements when moving out of Testing.
+
+Provider setup and a real end-to-end login must be verified in your accounts; unit tests do not prove the hosted configuration. Cloudflare hosting and Supabase social OAuth fit their free plans within quotas. Supabase free projects can pause after low activity; keep backups. Google sign-in does not use Supabase email delivery.
+
+References: https://supabase.com/docs/guides/auth/social-sign-in/auth-google and https://developers.cloudflare.com/pages/get-started/git-integration/
