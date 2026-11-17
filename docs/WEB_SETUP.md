@@ -48,7 +48,7 @@ http://127.0.0.1:4173/
 
 The app requests a link back to its current origin. If you use `localhost` instead of `127.0.0.1`, add that exact origin too. When deploying, set Site URL to the public HTTPS origin and allow its redirect URL. Local links must be opened on the same computer where preview is running; `127.0.0.1` on a phone points to the phone.
 
-Click **Send sign-in link**, then open the newest email link. The Supabase SDK verifies the returned session and removes its token fragment; Plannet opens profile setup for new accounts or the planner for existing profiles. No numeric code is required. Expired or previously used links require a fresh email. The app uses Supabase’s implicit flow to support email opening in another browser.
+Click **Send sign-in link**, then open the newest email link. The Supabase SDK verifies the returned session and removes its token fragment; Plannet opens profile setup for new accounts or the planner for existing profiles. No numeric code is required. Expired or previously used links require a fresh email. The app uses PKCE: the callback contains a short-lived authorization code rather than session tokens. Start and finish login in the same browser and device, including email links. The SDK exchanges the code automatically.
 
 If you previously changed a template to show only a code, restore its default link using Supabase’s template reset control. On the default sender, test only with an authorized organization-member email; do not add ordinary users as organization members just to enable delivery.
 

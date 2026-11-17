@@ -14,3 +14,11 @@ test('Google login returns to this app origin and propagates provider errors',as
  let received;await startGoogleLogin({auth:{signInWithOAuth:async args=>{received=args;return {error:null};}}},'https://plannet-test.pages.dev');assert.deepEqual(received,options);
  await assert.rejects(startGoogleLogin({auth:{signInWithOAuth:async()=>({error:new Error('Provider disabled')})}},'https://plannet-test.pages.dev'),/Provider disabled/);
 });
+
+test('PKCE client sends a code challenge instead of requesting tokens in the redirect',async()=>{
+ const {createClient}=await import('@supabase/supabase-js');
+ const values=new Map();const storage={getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};
+ const client=createClient('https://example.supabase.co','test-public-key',{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true,autoRefreshToken:false,storage}});
+ const {data,error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://plannet.pages.dev/',skipBrowserRedirect:true}});
+ assert.equal(error,null);const url=new URL(data.url);assert.ok(url.searchParams.get('code_challenge'));assert.equal(url.searchParams.get('code_challenge_method'),'s256');assert.equal(url.searchParams.get('redirect_to'),'https://plannet.pages.dev/');assert.ok([...values.keys()].some(k=>k.endsWith('-code-verifier')));
+});
